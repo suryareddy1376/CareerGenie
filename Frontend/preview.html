@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerGenie - Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f9fafb;
+            color: #374151;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Navigation */
+        nav {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2563eb;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .nav-link {
+            color: #6b7280;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: color 0.2s;
+        }
+        
+        .nav-link:hover {
+            color: #2563eb;
+        }
+        
+        .btn {
+            background: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #2563eb;
+            color: #2563eb;
+        }
+        
+        .btn-outline:hover {
+            background: #2563eb;
+            color: white;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+        
+        .highlight {
+            color: #2563eb;
+        }
+        
+        .hero p {
+            font-size: 20px;
+            color: #6b7280;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        /* Features */
+        .features {
+            padding: 80px 0;
+            background: white;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .section-header h2 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+        
+        .section-header p {
+            font-size: 18px;
+            color: #6b7280;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+        
+        .feature-card {
+            text-align: center;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            background: white;
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: #eff6ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 24px;
+            color: #2563eb;
+        }
+        
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+        
+        .feature-card p {
+            color: #6b7280;
+        }
+        
+        /* Testing Status */
+        .testing {
+            padding: 80px 0;
+            background: #f9fafb;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .status-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .status-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .status-icon {
+            margin-right: 12px;
+            font-size: 20px;
+        }
+        
+        .status-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .status-complete {
+            color: #10b981;
+        }
+        
+        .status-pending {
+            color: #f59e0b;
+        }
+        
+        .status-error {
+            color: #ef4444;
+        }
+        
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        li {
+            padding: 5px 0;
+            color: #6b7280;
+        }
+        
+        .check {
+            color: #10b981;
+            margin-right: 8px;
+        }
+        
+        .warning {
+            color: #f59e0b;
+            margin-right: 8px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 32px;
+            }
+            
+            .hero p {
+                font-size: 16px;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .nav-content {
+                flex-direction: column;
+                height: auto;
+                padding: 20px 0;
+            }
+            
+            .nav-links {
+                margin-top: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="nav-content">
+                <a href="#" class="logo">🧞‍♂️ CareerGenie</a>
+                <div class="nav-links">
+                    <a href="#" class="nav-link">Login</a>
+                    <a href="#" class="btn">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>
+                Unlock Your Career Potential with
+                <span class="highlight">CareerGenie</span>
+            </h1>
+            <p>
+                Get personalized career advice, skills recommendations, and actionable insights 
+                powered by AI to accelerate your professional growth.
+            </p>
+            <div class="hero-buttons">
+                <a href="#" class="btn">Start Your Journey</a>
+                <a href="#" class="btn btn-outline">Sign In</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Why Choose CareerGenie?</h2>
+                <p>
+                    Our AI-powered platform provides comprehensive career guidance tailored to your unique profile and goals.
+                </p>
+            </div>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI-Powered Analysis</h3>
+                    <p>Get personalized career recommendations powered by advanced AI algorithms that understand your unique skills and goals.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>Skills Development</h3>
+                    <p>Identify skill gaps and receive targeted learning recommendations to advance your career trajectory.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💼</div>
+                    <h3>Career Pathways</h3>
+                    <p>Explore multiple career paths and understand the steps needed to reach your professional objectives.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Progress Tracking</h3>
+                    <p>Monitor your skill development and career advancement with detailed analytics and insights.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Personalized Goals</h3>
+                    <p>Set and track personalized career goals with AI-guided milestones and actionable steps.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🌟</div>
+                    <h3>Expert Insights</h3>
+                    <p>Access curated industry insights and expert advice to stay ahead in your field.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testing Status -->
+    <section class="testing">
+        <div class="container">
+            <div class="section-header">
+                <h2>Project Status & Testing</h2>
+                <p>Current development status and component validation</p>
+            </div>
+            
+            <div class="status-grid">
+                <div class="status-card">
+                    <div class="status-header">
+                        <span class="status-icon status-complete">✅</span>
+                        <h3 class="status-title">Frontend Setup</h3>
+                    </div>
+                    <ul>
+                        <li><span class="check">✓</span> React + Vite configuration</li>
+                        <li><span class="check">✓</span> Tailwind CSS setup</li>
+                        <li><span class="check">✓</span> Component structure created</li>
+                        <li><span class="check">✓</span> Routing configuration</li>
+                        <li><span class="check">✓</span> ESLint configuration</li>
+                    </ul>
+                </div>
+
+                <div class="status-card">
+                    <div class="status-header">
+                        <span class="status-icon status-complete">✅</span>
+                        <h3 class="status-title">Core Components</h3>
+                    </div>
+                    <ul>
+                        <li><span class="check">✓</span> Landing Page</li>
+                        <li><span class="check">✓</span> Authentication (Login/Register)</li>
+                        <li><span class="check">✓</span> Dashboard</li>
+                        <li><span class="check">✓</span> Skills Assessment</li>
+                        <li><span class="check">✓</span> Recommendations</li>
+                        <li><span class="check">✓</span> User Profile</li>
+                    </ul>
+                </div>
+
+                <div class="status-card">
+                    <div class="status-header">
+                        <span class="status-icon status-pending">⚠️</span>
+                        <h3 class="status-title">Environment Setup</h3>
+                    </div>
+                    <ul>
+                        <li><span class="warning">⚠</span> Node.js installation needed</li>
+                        <li><span class="warning">⚠</span> npm dependencies installation</li>
+                        <li><span class="check">✓</span> Development scripts configured</li>
+                        <li><span class="check">✓</span> Build configuration ready</li>
+                    </ul>
+                </div>
+
+                <div class="status-card">
+                    <div class="status-header">
+                        <span class="status-icon status-pending">⚠️</span>
+                        <h3 class="status-title">Firebase Integration</h3>
+                    </div>
+                    <ul>
+                        <li><span class="check">✓</span> Firebase SDK integration</li>
+                        <li><span class="check">✓</span> Authentication context</li>
+                        <li><span class="warning">⚠</span> Project credentials needed</li>
+                        <li><span class="warning">⚠</span> Firestore rules configuration</li>
+                    </ul>
+                </div>
+
+                <div class="status-card">
+                    <div class="status-header">
+                        <span class="status-icon status-complete">✅</span>
+                        <h3 class="status-title">Code Quality</h3>
+                    </div>
+                    <ul>
+                        <li><span class="check">✓</span> No syntax errors detected</li>
+                        <li><span class="check">✓</span> ESLint configuration</li>
+                        <li><span class="check">✓</span> Component structure validated</li>
+                        <li><span class="check">✓</span> Import/export paths verified</li>
+                    </ul>
+                </div>
+
+                <div class="status-card">
+                    <div class="status-header">
+                        <span class="status-icon status-complete">✅</span>
+                        <h3 class="status-title">Documentation</h3>
+                    </div>
+                    <ul>
+                        <li><span class="check">✓</span> README.md with setup instructions</li>
+                        <li><span class="check">✓</span> TESTING_GUIDE.md</li>
+                        <li><span class="check">✓</span> SETUP_COMPLETE.md</li>
+                        <li><span class="check">✓</span> Copilot instructions</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px; text-align: center;">
+                <h3 style="color: #1f2937; margin-bottom: 16px;">Next Steps</h3>
+                <p style="color: #6b7280; margin-bottom: 20px;">
+                    To run the live React application, you'll need to:
+                </p>
+                <div style="background: white; border-radius: 8px; padding: 20px; text-align: left; max-width: 600px; margin: 0 auto;">
+                    <ol style="color: #374151; list-style: decimal; padding-left: 20px;">
+                        <li style="margin-bottom: 8px;">Install Node.js from <a href="https://nodejs.org" style="color: #2563eb;">nodejs.org</a></li>
+                        <li style="margin-bottom: 8px;">Run <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">npm install</code> in the project directory</li>
+                        <li style="margin-bottom: 8px;">Configure Firebase credentials in <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">src/config/firebase.js</code></li>
+                        <li>Run <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">npm run dev</code> to start the development server</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
