@@ -56,7 +56,11 @@ function AppContent() {
       <Navbar />
       <main className="container mx-auto px-4 py-8">
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={
+            <PublicRoute>
+              <Landing />
+            </PublicRoute>
+          } />
           <Route path="/login" element={
             <PublicRoute>
               <Login />
