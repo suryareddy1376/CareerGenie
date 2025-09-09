@@ -15,7 +15,7 @@ const Register = () => {
   const onSubmit = async (data) => {
     try {
       await signUp(data.email, data.password, data.name);
-      navigate('/dashboard');
+      navigate('/resume-decision');
     } catch (error) {
       // Error handling is done in AuthContext
       console.error('Registration failed:', error);
@@ -25,7 +25,7 @@ const Register = () => {
   const handleGoogleSignUp = async () => {
     try {
       await signInWithGoogle();
-      navigate('/dashboard');
+      navigate('/resume-decision');
     } catch (error) {
       // Error handling is done in AuthContext
       console.error('Google sign up failed:', error);

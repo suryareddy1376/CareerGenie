@@ -9,6 +9,9 @@ import Assessment from './pages/Assessment';
 import Recommendations from './pages/Recommendations';
 import Profile from './pages/Profile';
 import Landing from './pages/Landing';
+import ResumeDecision from './pages/ResumeDecision';
+import UploadResume from './pages/UploadResume';
+import BuildResume from './pages/BuildResume';
 
 // Loading Spinner Component
 const LoadingSpinner = () => (
@@ -56,11 +59,7 @@ function AppContent() {
       <Navbar />
       <main className="container mx-auto px-4 py-8">
         <Routes>
-          <Route path="/" element={
-            <PublicRoute>
-              <Landing />
-            </PublicRoute>
-          } />
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={
             <PublicRoute>
               <Login />
@@ -89,6 +88,21 @@ function AppContent() {
           <Route path="/profile" element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          } />
+          <Route path="/resume-decision" element={
+            <ProtectedRoute>
+              <ResumeDecision />
+            </ProtectedRoute>
+          } />
+          <Route path="/upload-resume" element={
+            <ProtectedRoute>
+              <UploadResume />
+            </ProtectedRoute>
+          } />
+          <Route path="/build-resume" element={
+            <ProtectedRoute>
+              <BuildResume />
             </ProtectedRoute>
           } />
         </Routes>
