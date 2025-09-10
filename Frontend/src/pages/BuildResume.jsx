@@ -466,4 +466,4 @@ const BuildResume = () => {
   );
 };
 
-export default BuildResume
+export default BuildResume;
