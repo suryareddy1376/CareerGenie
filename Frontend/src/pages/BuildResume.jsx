@@ -78,23 +78,28 @@ const BuildResume = () => {
     setSubmitting(true);
     
     try {
+      // Get Firebase ID token for authentication
+      const idToken = await currentUser.getIdToken();
+      
       const resumeData = {
         ...formData,
         userId: currentUser.uid,
         email: currentUser.email
       };
 
-      // TODO: Replace with your actual API endpoint
-      const response = await fetch('/api/buildResume', {
+      // Call CareerGenie backend API
+      const response = await fetch('http://localhost:3001/api/buildResume', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify(resumeData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to build resume');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to build resume');
       }
 
       const result = await response.json();
@@ -110,7 +115,7 @@ const BuildResume = () => {
       
     } catch (error) {
       console.error('Submit error:', error);
-      toast.error('Failed to create resume. Please try again.');
+      toast.error(error.message || 'Failed to create resume. Please try again.');
     } finally {
       setSubmitting(false);
     }

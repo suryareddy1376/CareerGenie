@@ -40,21 +40,29 @@ const UploadResume = () => {
     setUploading(true);
     
     try {
+      // Get Firebase ID token for authentication
+      const idToken = await currentUser.getIdToken();
+      
       const formData = new FormData();
       formData.append('resume', selectedFile);
       formData.append('userId', currentUser.uid);
 
-      // TODO: Replace with your actual API endpoint
-      const response = await fetch('/api/parseResume', {
+      // Call CareerGenie backend API
+      const response = await fetch('http://localhost:3001/api/parseResume', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`
+        },
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Upload failed');
       }
 
       const result = await response.json();
+      console.log('Upload result:', result);
       
       setUploadSuccess(true);
       toast.success('Resume uploaded and analyzed successfully!');
@@ -66,7 +74,7 @@ const UploadResume = () => {
       
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload resume. Please try again.');
+      toast.error(error.message || 'Failed to upload resume. Please try again.');
     } finally {
       setUploading(false);
     }

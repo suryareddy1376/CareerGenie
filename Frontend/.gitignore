@@ -30,6 +30,20 @@ dist-ssr
 .env.test.local
 .env.production.local
 
+# Test and setup files
+test-*
+*test*
+*TEST*
+*TESTING*
+sample-*
+preview.html
+setup.bat
+SETUP_COMPLETE.md
+TESTING_GUIDE.md
+AUTHENTICATION_EXAMPLES.md
+FIREBASE_SETUP.md
+validation.js
+
 # Firebase
 .firebase
 .firebaserc
