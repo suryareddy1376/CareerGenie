@@ -1,19 +1,32 @@
 /**
  * Enhanced AI Service for CareerGenie
  * Advanced AI-powered resume parsing and career guidance
- * Uses Google Cloud Free Tier compatible services with intelligent text processing
+ * Uses Vertex AI for enterprise-grade AI processing
  */
 
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const axios = require('axios');
 const natural = require('natural');
 const pdf = require('pdf-parse');
 const mammoth = require('mammoth');
+const { v4: uuidv4 } = require('uuid');
+const { GoogleAuth } = require('google-auth-library');
+const { db } = require('../config/firebase');
+
+// Simple structured logger helper
+function log(event, payload = {}) {
+  console.log(JSON.stringify({ ts: new Date().toISOString(), event, ...payload }));
+}
 
 class AIService {
   constructor() {
-    // Use Google Gemini API for AI processing (Free tier available)
-    this.genAI = process.env.GEMINI_API_KEY ? 
-      new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
+    // Vertex AI configuration
+  this.projectId = process.env.VERTEX_AI_PROJECT_ID;
+  this.location = process.env.VERTEX_AI_LOCATION || 'us-central1';
+  this.apiKey = process.env.VERTEX_AI_API_KEY; // Deprecated (will be removed when OAuth fully adopted)
+  this.requireRealAI = String(process.env.REQUIRE_REAL_AI || 'false').toLowerCase() === 'true';
+  this.allowFallbacks = String(process.env.ALLOW_AI_FALLBACKS || 'false').toLowerCase() === 'true';
+  this.auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
+  this.accessTokenCache = { token: null, expiresAt: 0 };
     
     // Initialize NLP tools
     this.tokenizer = new natural.WordTokenizer();
@@ -86,6 +99,354 @@ class AIService {
     };
   }
 
+  /**
+   * Vertex AI Text Generation using REST API
+   */
+  async getAccessToken() {
+    const now = Date.now();
+    if (this.accessTokenCache.token && this.accessTokenCache.expiresAt > now + 30000) {
+      return this.accessTokenCache.token;
+    }
+    const client = await this.auth.getClient();
+    const tokenResponse = await client.getAccessToken();
+    // tokenResponse = { token } ; expiration not always returned; set 45 min window
+    this.accessTokenCache = {
+      token: tokenResponse.token,
+      expiresAt: now + 45 * 60 * 1000
+    };
+    return tokenResponse.token;
+  }
+
+  async generateWithVertexAI(prompt, parameters = {}) {
+    const start = Date.now();
+    try {
+      if (!this.projectId) throw new Error('VERTEX_AI_PROJECT_ID not configured');
+      const endpoint = `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/text-bison:predict`;
+      const requestBody = {
+        instances: [{ prompt }],
+        parameters: {
+          temperature: parameters.temperature ?? 0.7,
+            maxOutputTokens: parameters.maxOutputTokens ?? 1024,
+            topP: parameters.topP ?? 0.8,
+            topK: parameters.topK ?? 40
+        }
+      };
+      let authHeader;
+      try {
+        const token = await this.getAccessToken();
+        authHeader = `Bearer ${token}`;
+      } catch (tokenErr) {
+        if (this.apiKey) {
+          authHeader = `Bearer ${this.apiKey}`; // legacy fallback
+        } else throw tokenErr;
+      }
+      const response = await axios.post(endpoint, requestBody, {
+        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+        timeout: 20000
+      });
+      const content = response?.data?.predictions?.[0]?.content;
+      if (!content) throw new Error('Empty Vertex AI content');
+      log('vertex_ai.success', { latencyMs: Date.now() - start });
+      return content;
+    } catch (error) {
+      log('vertex_ai.error', { message: error.message, latencyMs: Date.now() - start });
+      if (this.requireRealAI) {
+        throw error;
+      }
+      if (this.allowFallbacks) {
+        return this.generateFallbackResponse(prompt);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Fallback AI response generator for development/testing
+   */
+  generateFallbackResponse(prompt) {
+    if (!this.allowFallbacks) {
+      return 'Fallbacks disabled';
+    }
+    if (prompt.includes('career recommendations') || prompt.includes('job recommendations')) {
+      return JSON.stringify([
+        {
+          title: "Senior Software Engineer",
+          company: "Tech Corp",
+          match: 92,
+          salary: "$120,000 - $150,000",
+          location: "Remote",
+          description: "Join our innovative team working on cutting-edge technology solutions."
+        },
+        {
+          title: "Full Stack Developer",
+          company: "StartupXYZ",
+          match: 88,
+          salary: "$90,000 - $120,000",
+          location: "San Francisco, CA",
+          description: "Build scalable web applications using modern technologies."
+        }
+      ]);
+    }
+    
+    if (prompt.includes('skill gap') || prompt.includes('skills analysis')) {
+      return JSON.stringify({
+        currentSkills: ["JavaScript", "React", "Node.js"],
+        missingSkills: ["TypeScript", "Docker", "Kubernetes"],
+        recommendations: [
+          "Learn TypeScript to improve code quality and maintainability",
+          "Master Docker for containerization and deployment",
+          "Study Kubernetes for orchestration and scaling"
+        ],
+        categories: {
+          technical: 75,
+          leadership: 60,
+          communication: 80
+        }
+      });
+    }
+    
+    if (prompt.includes('interview questions')) {
+      return JSON.stringify([
+        {
+          question: "Tell me about yourself and your experience.",
+          category: "behavioral",
+          difficulty: "easy",
+          keyPoints: ["Background summary", "Relevant experience", "Career goals"]
+        },
+        {
+          question: "How do you handle challenging technical problems?",
+          category: "technical",
+          difficulty: "medium",
+          keyPoints: ["Problem-solving approach", "Research methods", "Collaboration"]
+        }
+      ]);
+    }
+    
+    if (prompt.includes('cover letter')) {
+      return `Dear Hiring Manager,
+
+I am excited to apply for the position at your company. With my background in software development and passion for innovation, I believe I would be a valuable addition to your team.
+
+In my previous roles, I have successfully delivered multiple projects, demonstrating my ability to work effectively both independently and as part of a team. My technical skills include JavaScript, React, and Node.js, which align well with your requirements.
+
+I am particularly drawn to your company's mission and would welcome the opportunity to contribute to your continued success. Thank you for considering my application.
+
+Best regards,
+[Your Name]`;
+    }
+    
+    return "Thank you for your query. This is a fallback response while the AI service is being configured.";
+  }
+
+  /**
+   * Advanced NLP Analysis with Google Cloud Natural Language
+   */
+  async analyzeTextWithNLP(text) {
+    try {
+      const document = {
+        content: text,
+        type: 'PLAIN_TEXT',
+      };
+
+      // Perform multiple analyses
+      const [entities] = await this.languageClient.analyzeEntities({ document });
+      const [sentiment] = await this.languageClient.analyzeSentiment({ document });
+      const [syntax] = await this.languageClient.analyzeSyntax({ document });
+
+      return {
+        entities: entities.entities,
+        sentiment: sentiment.documentSentiment,
+        syntax: syntax.tokens,
+        language: entities.language
+      };
+    } catch (error) {
+      console.error('NLP analysis error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Enhanced Resume Parsing with Vertex AI
+   */
+  async enhancedResumeAnalysis(text) {
+    const prompt = `
+    Analyze this resume text and extract structured information:
+    
+    Resume Text:
+    ${text}
+    
+    Please provide the following information in JSON format:
+    {
+      "personalInfo": {
+        "name": "string",
+        "email": "string",
+        "phone": "string",
+        "location": "string",
+        "linkedIn": "string"
+      },
+      "summary": "string",
+      "skills": {
+        "technical": ["array of technical skills"],
+        "soft": ["array of soft skills"],
+        "tools": ["array of tools/software"]
+      },
+      "experience": [
+        {
+          "company": "string",
+          "position": "string",
+          "duration": "string",
+          "responsibilities": ["array of key responsibilities"],
+          "achievements": ["array of achievements with metrics if available"]
+        }
+      ],
+      "education": [
+        {
+          "institution": "string",
+          "degree": "string",
+          "field": "string",
+          "graduationYear": "string",
+          "gpa": "string if available"
+        }
+      ],
+      "certifications": ["array of certifications"],
+      "projects": [
+        {
+          "name": "string",
+          "description": "string",
+          "technologies": ["array of technologies used"],
+          "impact": "string"
+        }
+      ]
+    }
+    
+    Only return the JSON object, no additional text.
+    `;
+
+    try {
+      const response = await this.generateWithVertexAI(prompt, {
+        temperature: 0.3,
+        maxOutputTokens: 2048
+      });
+      
+  const parsedEnhanced = JSON.parse(response);
+  return parsedEnhanced;
+    } catch (error) {
+  console.error('Enhanced resume analysis error:', error);
+  if (this.requireRealAI) throw error;
+  // Fallback to basic parsing only if allowed
+  return await this.extractResumeData(text);
+    }
+  }
+
+  /**
+   * Generate Career Recommendations with Vertex AI
+   */
+  async generateCareerRecommendations(resumeData, preferences = {}) {
+    const prompt = `
+    Based on this resume data and user preferences, provide career recommendations:
+    
+    Resume Data: ${JSON.stringify(resumeData, null, 2)}
+    User Preferences: ${JSON.stringify(preferences, null, 2)}
+    
+    Provide 5 career recommendations in this JSON format:
+    {
+      "recommendations": [
+        {
+          "title": "Job Title",
+          "company": "Example Company Type",
+          "matchScore": 85,
+          "reasoning": "Why this role fits",
+          "requiredSkills": ["skills needed"],
+          "missingSkills": ["skills to develop"],
+          "salaryRange": {
+            "min": 80000,
+            "max": 120000
+          },
+          "growthPotential": "High/Medium/Low",
+          "learningPath": ["step 1", "step 2", "step 3"]
+        }
+      ],
+      "overallAnalysis": {
+        "strengths": ["key strengths"],
+        "improvementAreas": ["areas to improve"],
+        "marketTrends": "relevant market insights"
+      }
+    }
+    
+    Only return the JSON object.
+    `;
+
+    try {
+      const response = await this.generateWithVertexAI(prompt, {
+        temperature: 0.7,
+        maxOutputTokens: 2048
+      });
+      
+  const recParsed = JSON.parse(response);
+  return recParsed;
+    } catch (error) {
+  console.error('Career recommendation error:', error);
+  if (this.requireRealAI) throw error;
+  return this.generateBasicRecommendations(resumeData);
+    }
+  }
+
+  /**
+   * AI-Powered Skill Gap Analysis
+   */
+  async analyzeSkillGap(currentSkills, targetRole) {
+    const prompt = `
+    Analyze skill gap for career transition:
+    
+    Current Skills: ${JSON.stringify(currentSkills)}
+    Target Role: ${targetRole}
+    
+    Provide analysis in JSON format:
+    {
+      "gapAnalysis": {
+        "matchingSkills": ["skills that align"],
+        "missingSkills": [
+          {
+            "skill": "skill name",
+            "importance": "High/Medium/Low",
+            "timeToLearn": "weeks/months needed",
+            "resources": ["learning resources"]
+          }
+        ],
+        "transferableSkills": ["skills that transfer well"],
+        "overallReadiness": "percentage",
+        "timelineEstimate": "estimated time to be job-ready"
+      },
+      "learningPlan": {
+        "phase1": {
+          "duration": "time period",
+          "skills": ["skills to focus on"],
+          "resources": ["recommended resources"]
+        },
+        "phase2": {
+          "duration": "time period", 
+          "skills": ["advanced skills"],
+          "resources": ["advanced resources"]
+        }
+      }
+    }
+    `;
+
+    try {
+      const response = await this.generateWithVertexAI(prompt, {
+        temperature: 0.4,
+        maxOutputTokens: 1536
+      });
+      
+  const gapParsed = JSON.parse(response);
+  return gapParsed;
+    } catch (error) {
+  console.error('Skill gap analysis error:', error);
+  if (this.requireRealAI) throw error;
+  return this.basicSkillGapAnalysis(currentSkills, targetRole);
+    }
+  }
+
   async parseResumeContent(fileBuffer, fileName) {
     try {
       let text = '';
@@ -101,10 +462,30 @@ class AIService {
         text = fileBuffer.toString('utf-8');
       }
 
-      // Parse resume sections and extract structured data
-      const parsedResume = await this.extractResumeData(text);
-      
-      return parsedResume;
+      // Use enhanced AI parsing with Vertex AI
+      try {
+        console.log('🤖 Using Vertex AI for enhanced resume analysis...');
+        const aiParsedResume = await this.enhancedResumeAnalysis(text);
+        
+        // Add NLP analysis for additional insights
+        const nlpAnalysis = await this.analyzeTextWithNLP(text);
+        
+        return {
+          ...aiParsedResume,
+          nlpInsights: nlpAnalysis,
+          processingMethod: 'vertex-ai-enhanced',
+          confidence: 0.9
+        };
+      } catch (aiError) {
+        console.warn('⚠️  Vertex AI parsing failed, falling back to basic parsing:', aiError.message);
+        // Fallback to basic parsing
+        const parsedResume = await this.extractResumeData(text);
+        return {
+          ...parsedResume,
+          processingMethod: 'basic-fallback',
+          confidence: 0.7
+        };
+      }
     } catch (error) {
       console.error('Error parsing resume:', error);
       throw new Error('Failed to parse resume content');
@@ -847,68 +1228,60 @@ class AIService {
 
   async chatWithAI(message, context = {}) {
     try {
-      console.log('💬 Processing AI chat message...');
-      
-      // Simple rule-based responses for free tier
-      const responses = this.getAIChatResponses();
-      const lowerMessage = message.toLowerCase();
-      
-      let response = responses.default;
-      
-      // Match message to appropriate response
-      for (const [keywords, responseText] of Object.entries(responses)) {
-        if (keywords !== 'default' && keywords.split('|').some(keyword => lowerMessage.includes(keyword))) {
-          response = responseText;
-          break;
-        }
+      const userId = context.userId;
+      const now = new Date();
+      let history = [];
+      if (userId) {
+        const snap = await db.collection('chats')
+          .where('userId', '==', userId)
+          .orderBy('createdAt', 'desc')
+          .limit(12)
+          .get();
+        history = snap.docs.map(d => d.data()).reverse();
       }
-
-      // Personalize response with context
-      if (context.userProfile) {
-        response = this.personalizeResponse(response, context.userProfile);
+      const system = 'You are CareerGenie, an expert career coach. Provide concise, actionable, ethical guidance. Use bullet points sparingly and never invent experience.';
+      const historyText = history.map(h => `${h.role.toUpperCase()}: ${h.message}`).join('\n');
+      const prompt = `${system}\n${historyText}\nUSER: ${message}\nASSISTANT:`;
+      const raw = await this.generateWithVertexAI(prompt, { temperature: 0.65, maxOutputTokens: 600 });
+      const reply = raw.trim();
+      if (userId) {
+        const batch = db.batch();
+        const userRef = db.collection('chats').doc();
+        batch.set(userRef, { userId, role: 'user', message, createdAt: now, model: 'text-bison', type: 'chat' });
+        const assistantRef = db.collection('chats').doc();
+        batch.set(assistantRef, { userId, role: 'assistant', message: reply, createdAt: now, model: 'text-bison', type: 'chat' });
+        await batch.commit();
       }
-
-      console.log('✅ AI chat response generated');
-      return {
-        message: response,
-        timestamp: new Date().toISOString(),
-        context: context
-      };
+      return { message: reply, timestamp: now.toISOString() };
     } catch (error) {
-      console.error('❌ AI chat error:', error);
+      if (this.requireRealAI) throw error;
+      if (this.allowFallbacks) return { message: 'Chat temporarily unavailable.', timestamp: new Date().toISOString() };
       throw error;
     }
-  }
-
-  getAIChatResponses() {
-    return {
-      'skills|skill|learn': 'Based on current industry trends, I recommend focusing on in-demand skills like cloud computing, data analysis, and AI/ML. What specific area interests you most?',
-      'career|job|role': 'Career growth depends on continuous learning and networking. Consider exploring roles that align with your strengths and market demand. Would you like me to analyze potential career paths for you?',
-      'resume|cv': 'A strong resume should highlight your achievements with quantifiable results, relevant skills, and clear career progression. Would you like me to help you optimize your resume?',
-      'interview|prepare': 'Interview preparation involves researching the company, practicing common questions, and preparing specific examples that demonstrate your skills. Focus on the STAR method for behavioral questions.',
-      'salary|compensation': 'Salary negotiations should be based on market research, your experience level, and the value you bring. Research industry standards and be prepared to justify your expectations.',
-      'networking|connections': 'Professional networking is crucial for career growth. Engage on LinkedIn, attend industry events, and maintain relationships with colleagues and mentors.',
-      default: 'I\'m here to help with your career development! You can ask me about skills, career paths, resume optimization, interview preparation, or any other career-related questions.'
-    };
-  }
-
-  personalizeResponse(response, userProfile) {
-    if (userProfile.skills?.technical?.length > 0) {
-      response += ` Given your background in ${userProfile.skills.technical.slice(0, 2).join(' and ')}, I can provide more targeted advice.`;
-    }
-    
-    if (userProfile.experience?.length > 0) {
-      const recentJob = userProfile.experience[0];
-      response += ` With your experience as a ${recentJob.title}, you have a solid foundation to build upon.`;
-    }
-
-    return response;
   }
 
   // Legacy methods for backward compatibility
   static async extractResumeData(resumeText) {
     const service = new AIService();
     return await service.extractResumeData(resumeText);
+  }
+
+  // Public wrappers with persistence (to be called by controllers if userId available)
+  async generateAndStoreRecommendations(userId, resumeData, preferences) {
+    const output = await this.generateCareerRecommendations(resumeData, preferences);
+    await this.storeAnalysis('recommendations', userId, { resumeData, preferences }, output, { feature: 'career_recommendations' });
+    return output;
+  }
+
+  async generateAndStoreSkillGap(userId, currentSkills, targetRole) {
+    const output = await this.analyzeSkillGap(currentSkills, targetRole);
+    await this.storeAnalysis('skill_gap', userId, { currentSkills, targetRole }, output, { feature: 'skill_gap' });
+    return output;
+  }
+
+  async storeResumeAIResult(userId, rawText, analysis) {
+    await this.storeResumeAnalysis(userId, analysis, analysis?.nlpInsights, { rawLength: rawText?.length });
+    return analysis;
   }
 
   static parseResumeText(text) {

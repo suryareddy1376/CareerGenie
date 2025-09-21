@@ -5,14 +5,18 @@ import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
 // Firebase configuration
+// Values should be supplied via environment variables (Vite: VITE_*). Hardcoded fallbacks are for local dev only.
+// Provided Firebase Project ID: carrergenie-55e58
+// NEVER commit real apiKey overrides produced for production into source control.
 const firebaseConfig = {
-  apiKey: "AIzaSyBnFstb0vA59ZEVVLHuAkuevtYjL1fkLwU",
-  authDomain: "bio-planters.firebaseapp.com",
-  projectId: "bio-planters",
-  storageBucket: "bio-planters.firebasestorage.app",
-  messagingSenderId: "701085761259",
-  appId: "1:701085761259:web:34364b9425d601a943c8ae",
-  measurementId: "G-50BRER9F3L"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY, // Required
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "carrergenie-55e58.firebaseapp.com",
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://carrergenie-55e58.firebaseio.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "carrergenie-55e58",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "carrergenie-55e58.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase

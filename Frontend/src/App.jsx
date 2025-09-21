@@ -13,6 +13,14 @@ import ResumeDecision from './pages/ResumeDecision';
 import UploadResume from './pages/UploadResume';
 import BuildResume from './pages/BuildResume';
 
+// AI Feature Components
+import CareerRecommendations from './components/CareerRecommendations';
+import SkillGapAnalysis from './components/SkillGapAnalysis';
+import InterviewPreparation from './components/InterviewPreparation';
+import CoverLetterGenerator from './components/CoverLetterGenerator';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
+import AITestComponent from './components/AITestComponent';
+
 // Loading Spinner Component
 const LoadingSpinner = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -52,8 +60,6 @@ const PublicRoute = ({ children }) => {
 };
 
 function AppContent() {
-  const { currentUser } = useAuth();
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -103,6 +109,38 @@ function AppContent() {
           <Route path="/build-resume" element={
             <ProtectedRoute>
               <BuildResume />
+            </ProtectedRoute>
+          } />
+          
+          {/* AI Feature Routes */}
+          <Route path="/ai/career-recommendations" element={
+            <ProtectedRoute>
+              <CareerRecommendations />
+            </ProtectedRoute>
+          } />
+          <Route path="/ai/skill-gap-analysis" element={
+            <ProtectedRoute>
+              <SkillGapAnalysis />
+            </ProtectedRoute>
+          } />
+          <Route path="/ai/interview-preparation" element={
+            <ProtectedRoute>
+              <InterviewPreparation />
+            </ProtectedRoute>
+          } />
+          <Route path="/ai/cover-letter" element={
+            <ProtectedRoute>
+              <CoverLetterGenerator />
+            </ProtectedRoute>
+          } />
+          <Route path="/analytics" element={
+            <ProtectedRoute>
+              <AnalyticsDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/ai/test" element={
+            <ProtectedRoute>
+              <AITestComponent />
             </ProtectedRoute>
           } />
         </Routes>

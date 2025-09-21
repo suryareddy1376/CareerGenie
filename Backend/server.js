@@ -18,10 +18,11 @@ const resumeRoutes = require('./src/routes/resumeRoutes');
 const authRoutes = require('./src/routes/authRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const healthRoutes = require('./src/routes/healthRoutes');
+const aiRoutes = require('./src/routes/aiRoutes');
 
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5000;
 
 // Trust proxy for accurate IP addresses (important for rate limiting)
 app.set('trust proxy', 1);
@@ -165,6 +166,7 @@ app.use('/api', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api', resumeRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Catch-all for undefined API routes
 app.use('/api/*', (req, res) => {

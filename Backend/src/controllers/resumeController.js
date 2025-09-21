@@ -4,7 +4,7 @@
  */
 
 const resumeService = require('../services/resumeService');
-const SupabaseService = require('../services/supabaseService');
+// const SupabaseService = require('../services/supabaseService'); // Temporarily disabled - using Firebase only
 const { validationResult } = require('express-validator');
 
 class ResumeController {

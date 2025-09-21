@@ -1,7 +1,13 @@
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin SDK
-// The service account key will be loaded from the config folder
+// The service account key will be loaded from the config folder.
+// NOTE: Firebase project (auth/firestore/storage) may differ from the Vertex AI GCP project.
+// Ensure the following env vars are set in Backend/.env:
+//   FIREBASE_PROJECT_ID=carrergenie-55e58
+//   FIREBASE_STORAGE_BUCKET=carrergenie-55e58.appspot.com
+//   (Separate) VERTEX_AI_PROJECT_ID=annular-catfish-471811-h6
+// Do NOT hard-code secrets in source control.
 let serviceAccount;
 
 try {
@@ -9,16 +15,24 @@ try {
 } catch (error) {
   console.error('❌ Firebase service account key not found!');
   console.error('📋 Please add serviceAccountKey.json to the config folder');
-  console.error('🔗 Get it from: https://console.firebase.google.com/project/bio-planters/settings/serviceaccounts/adminsdk');
+  console.error('🔗 Get it from: https://console.firebase.google.com/project/carrergenie-55e58/settings/serviceaccounts/adminsdk');
   process.exit(1);
 }
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
+  const firebaseProjectId = process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id;
+  const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || `${firebaseProjectId}.appspot.com`;
+
+  if (!firebaseProjectId) {
+    console.error('❌ FIREBASE_PROJECT_ID not set and not derivable from service account.');
+    process.exit(1);
+  }
+
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'bio-planters.appspot.com',
-    databaseURL: `https://${process.env.FIREBASE_PROJECT_ID || 'bio-planters'}.firebaseio.com`
+    storageBucket,
+    databaseURL: `https://${firebaseProjectId}.firebaseio.com`
   });
 }
 
