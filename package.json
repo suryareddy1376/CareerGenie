@@ -1,0 +1,50 @@
+{
+  "name": "careergenie-fullstack",
+  "version": "1.0.0",
+  "description": "AI-powered career guidance platform with resume analysis and personalized recommendations",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd Backend && npm run dev",
+    "dev:frontend": "cd Frontend && npm run dev",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd Frontend && npm run build",
+    "build:backend": "cd Backend && npm install --production",
+    "start": "cd Backend && npm start",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "cd Backend && npm test",
+    "test:frontend": "cd Frontend && npm test",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "cd Backend && npm run lint",
+    "lint:frontend": "cd Frontend && npm run lint",
+    "deploy:prepare": "npm run build && npm run test"
+  },
+  "keywords": [
+    "career",
+    "ai",
+    "resume",
+    "job-search",
+    "skill-analysis",
+    "firebase",
+    "vertex-ai",
+    "react",
+    "nodejs"
+  ],
+  "author": "CareerGenie Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/careergenie.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/careergenie/issues"
+  },
+  "homepage": "https://github.com/your-username/careergenie#readme"
+}

@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "Frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://your-backend-domain.com/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "Frontend/$1"
+    }
+  ],
+  "env": {
+    "VITE_API_URL": "https://your-backend-domain.com"
+  },
+  "functions": {
+    "Frontend/dist/**": {
+      "includeFiles": "Frontend/dist/**"
+    }
+  }
+}
